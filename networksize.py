@@ -5,7 +5,6 @@ from abc import ABCMeta
 from random import randint
 import csv
 
-
 class GraphCrawler:
     __metaclass__ = ABCMeta
 
@@ -66,13 +65,23 @@ class RandomWalker:
                 edges = self.network.GetEdges()
                 self.writer.writerow({'step': self.step, 'node': self.currentNode, 'nodes': nodes, 'edges': edges})
 
+    def chooseNextNode(self, connectedNodes):
+        if len(connectedNodes) == 0:
+            return None
+
+        # Simple Random Walk
+        randomIndex = randint(0, len(connectedNodes)-1)
+        nextNode = connectedNodes[randomIndex]
+        return nextNode
+
+
     def walk(self, steps):
-        self.startNode = crawler.getRandomStartingNode()
+        self.startNode = self.crawler.getRandomStartingNode()
         self.currentNode = self.startNode
         for self.step in range(0, steps):
             node = self.currentNode
             self.__addNode(node)
-            connectedNodes = crawler.getConnectedNodes(node)
+            connectedNodes = self.crawler.getConnectedNodes(node)
             for connectedNode in connectedNodes:
                 self.__addNode(connectedNode)
                 self.network.AddEdge(node, connectedNode)
@@ -81,39 +90,51 @@ class RandomWalker:
             self.__updateProgress(int(float(self.step+1)/steps*100.0))
 
             # Choose next node
-            if len(connectedNodes) > 0:
-                randomIndex = randint(0, len(connectedNodes)-1)
-                nextNode = connectedNodes[randomIndex]
-                self.currentNode=nextNode
+            self.currentNode = self.chooseNextNode(connectedNodes)
 
         print ""
 
 
+class Experiment:
+    def __init__(self, graph, name):
+        self.graph = graph
+        self.name = name
 
-def printGraphInfo(graph, file):
-    print("Printing Graph Info")
-    snap.PrintInfo(graph, "Python type PNGraph", file, True)
+    def printGraphInfo(self, file):
+        print("Printing Graph Info")
+        snap.PrintInfo(self.graph, "Python type PNGraph", file, True)
 
-def printFullGraphInfo(graph, file):
-    print("Printing Full Graph Info")
-    snap.PrintInfo(graph, "Python type PNGraph", file, False)
+    def printFullGraphInfo(self, file):
+        print("Printing Full Graph Info")
+        snap.PrintInfo(self.graph, "Python type PNGraph", file, False)
 
-def plotDegreeDistribution(graph, file):
-    print("Plotting Degree Distribution")
-    snap.PlotOutDegDistr(graph, file, "Network - out-degree Distribution")
+    def plotDegreeDistribution(self, file):
+        print("Plotting Degree Distribution")
+        snap.PlotOutDegDistr(self.graph, file, "Network - out-degree Distribution")
 
-def visualiseGraph(graph, file, title):
-    snap.DrawGViz(graph, snap.gvlDot, file, title)
+    def visualiseGraph(self, file, title):
+        snap.DrawGViz(self.graph, snap.gvlDot, file, title)
+
+    def run(self):
+        self.plotDegreeDistribution(self.name)
+        crawler = SnapGraphCrawler(self.graph)
+        walker = RandomWalker(crawler, self.name+'.csv')
+        walker.walk(1000)
 
 if __name__ == '__main__':
     # Generates an Erdos-Renyi random graph
-    network = snap.GenRndGnm(snap.PNEANet, 10000, 1000000)
-    plotDegreeDistribution(network, "randomgraph")
-    crawler = SnapGraphCrawler(network)
-    walker = RandomWalker(crawler, 'randomgraph.csv')
-    walker.walk(1000)
+    n1 = snap.GenRndGnm(snap.PNEANet, 10000, 1000000)
+    exp1 = Experiment(n1, "randomgraph")
+    exp1.run()
 
     # Generates a random scale-free, undirected graph using the Geometric Preferential Attachment model
     Rnd = snap.TRnd();
-    UGraph = snap.GenGeoPrefAttach(100, 10, 0.25, Rnd)
-    plotDegreeDistribution(UGraph, "scalefree")
+    n2 = snap.GenGeoPrefAttach(10000, 1000000, 0.25, Rnd)
+    exp2 = Experiment(n2, "geoprefattach")
+    exp2.run()
+
+    # Generates an undirected graph with a power-law degree distribution using Barabasi-Albert model
+    Rnd = snap.TRnd();
+    n3 = snap.GenPrefAttach(10000, 1000000, Rnd)
+    exp3 = Experiment(n3, "barabasi")
+    exp3.run()
