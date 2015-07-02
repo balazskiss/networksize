@@ -14,6 +14,9 @@ class GraphCrawler:
     def getConnectedNodes(self, node):
         return []
 
+    def getDegreeOfNode(self, node):
+        return 0
+
 
 class SnapGraphCrawler(GraphCrawler):
 
@@ -30,6 +33,10 @@ class SnapGraphCrawler(GraphCrawler):
             nodeId = nodeIterator.GetOutNId(n)
             outNodes.append(nodeId)
         return outNodes
+
+    def getDegreeOfNode(self, node):
+        iterator = self.graph.GetNI(node)
+        return iterator.GetDeg()
 
 class RandomWalker:
 
@@ -76,6 +83,7 @@ class RandomWalker:
 
 
     def walk(self, steps):
+        self.returns = 0
         self.startNode = self.crawler.getRandomStartingNode()
         self.currentNode = self.startNode
         for self.step in range(0, steps):
@@ -92,7 +100,33 @@ class RandomWalker:
             # Choose next node
             self.currentNode = self.chooseNextNode(connectedNodes)
 
+            if self.currentNode == self.startNode :
+                print "Return!"
+                self.returns += 1
+                nodeEstimate = self.__getNodeEstimate(self.step, self.startNode, self.returns)
+                print nodeEstimate
+
         print ""
+
+
+    def __getEdgeWeight(self, u, v):
+        return 1/self.crawler.getDegreeOfNode(u) + 1/self.crawler.getDegreeOfNode(v)
+
+    def __getVertexWeight(self, u):
+        sum = 1
+        for neighbour in self.crawler.getConnectedNodes(u):
+            sum += 1/self.crawler.getDegreeOfNode(neighbour)
+        return sum
+
+    def __getEdgeProbability(self, u, v):
+        return self.__getEdgeWeight(u, v) / self.__getVertexWeight(u)
+
+    def __getNodeEstimate(self, time, node, nReturns):
+        print "time: " + str(time)
+        print "n Returns: " + str(nReturns)
+        nodeEstimate = (time * self.__getVertexWeight(node)) / (2 * nReturns)
+        return nodeEstimate
+
 
 
 class Experiment:
@@ -115,26 +149,25 @@ class Experiment:
     def visualiseGraph(self, file, title):
         snap.DrawGViz(self.graph, snap.gvlDot, file, title)
 
-    def run(self):
-        self.plotDegreeDistribution(self.name)
+    def run(self, steps):
         crawler = SnapGraphCrawler(self.graph)
         walker = RandomWalker(crawler, self.name+'.csv')
-        walker.walk(1000)
+        walker.walk(steps)
 
 if __name__ == '__main__':
     # Generates an Erdos-Renyi random graph
-    n1 = snap.GenRndGnm(snap.PNEANet, 10000, 1000000)
-    exp1 = Experiment(n1, "randomgraph")
-    exp1.run()
+    # n1 = snap.GenRndGnm(snap.PNEANet, 10000, 1000000)
+    # exp1 = Experiment(n1, "randomgraph")
+    # exp1.run()
 
-    # Generates a random scale-free, undirected graph using the Geometric Preferential Attachment model
-    Rnd = snap.TRnd();
-    n2 = snap.GenGeoPrefAttach(10000, 1000000, 0.25, Rnd)
-    exp2 = Experiment(n2, "geoprefattach")
-    exp2.run()
-
+    # # Generates a random scale-free, undirected graph using the Geometric Preferential Attachment model
+    # Rnd = snap.TRnd();
+    # n2 = snap.GenGeoPrefAttach(10000, 1000000, 0.25, Rnd)
+    # exp2 = Experiment(n2, "geoprefattach")
+    # exp2.run()
+    #
     # Generates an undirected graph with a power-law degree distribution using Barabasi-Albert model
     Rnd = snap.TRnd();
-    n3 = snap.GenPrefAttach(10000, 1000000, Rnd)
+    n3 = snap.GenPrefAttach(100, 1000, Rnd)
     exp3 = Experiment(n3, "barabasi")
-    exp3.run()
+    exp3.run(10000)
