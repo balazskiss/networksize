@@ -4,11 +4,18 @@ import snap
 from abc import ABCMeta
 from random import randint
 import csv
+import time
 
 class GraphCrawler:
     __metaclass__ = ABCMeta
 
-    def getRandomStartingNode(self):
+    def __init__(self):
+        pass
+
+    def getRandomNode(self):
+        return None
+
+    def getHighestDegreeNode(self):
         return None
 
     def getConnectedNodes(self, node):
@@ -23,8 +30,11 @@ class SnapGraphCrawler(GraphCrawler):
     def __init__(self, graph):
         self.graph = graph
 
-    def getRandomStartingNode(self):
+    def getRandomNode(self):
         return randint(0, self.graph.GetNodes()-1)
+
+    def getHighestDegreeNode(self):
+        return snap.GetMxDegNId(self.graph)
 
     def getConnectedNodes(self, node):
         nodeIterator=self.graph.GetNI(node)
@@ -35,46 +45,45 @@ class SnapGraphCrawler(GraphCrawler):
         return outNodes
 
     def getDegreeOfNode(self, node):
+        return len(self.getConnectedNodes(node)) # FIX THIS!!!!!!!!!!!!!!!!!!!!!!
         iterator = self.graph.GetNI(node)
         return iterator.GetDeg()
 
+class RandomWalkerDelegate:
+
+    def __init__(self):
+        pass
+
+    def returnedToStartNode(self, step):
+        pass
+
 class RandomWalker:
 
-    def __init__(self, crawler, outputFile=None):
+    def __init__(self, crawler, estimator, startNode):
+        self.delegate = None
         self.crawler = crawler
+        self.estimator = estimator
+        self.startNode = startNode
         self.network = snap.TNEANet.New()
-        self.outputFile = outputFile
 
-        if self.outputFile is not None:
-            with open(self.outputFile, 'w') as csvfile:
-                fieldnames = ['step', 'node', 'nodes', 'edges']
-                self.writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                self.writer.writeheader()
-
-    def __addNode(self, node):
-        try:
-            self.network.AddNode(node)
-        # Ignores if node already exists
-        except RuntimeError:
-            pass
-
-    def __updateProgress(self, progress):
-        print '\r[{0}] {1}%'.format('#'*(progress/10), progress),
-
-    def __output(self):
-        if self.outputFile is not None:
-            with open(self.outputFile, 'a') as csvfile:
-                fieldnames = ['step', 'node', 'nodes', 'edges']
-                self.writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                step = self.step
-                node = self.currentNode
-                nodes = self.network.GetNodes()
-                edges = self.network.GetEdges()
-                self.writer.writerow({'step': self.step, 'node': self.currentNode, 'nodes': nodes, 'edges': edges})
 
     def chooseNextNode(self, connectedNodes):
         if len(connectedNodes) == 0:
             return None
+
+        # Weighted Random Walk
+        rnd = random.random()
+        rnd = randint(0,100000) / 100000.0
+        psum = 0.0
+        for neighbour in connectedNodes:
+            w_edge = self.estimator.getEdgeWeight(self.currentNode, neighbour)
+            w_node = self.estimator.getNodeWeight(self.currentNode)
+            p = w_edge / w_node
+            # p = 1.0 / len(connectedNodes)
+            psum += p
+            if rnd <= psum:
+                return neighbour
+        return connectedNodes[0]
 
         # Simple Random Walk
         randomIndex = randint(0, len(connectedNodes)-1)
@@ -82,57 +91,70 @@ class RandomWalker:
         return nextNode
 
 
-    def walk(self, steps):
-        self.returns = 0
-        self.startNode = self.crawler.getRandomStartingNode()
+    def walk(self):
+        self.step = 0
         self.currentNode = self.startNode
-        for self.step in range(0, steps):
+        while True:
             node = self.currentNode
-            self.__addNode(node)
             connectedNodes = self.crawler.getConnectedNodes(node)
-            for connectedNode in connectedNodes:
-                self.__addNode(connectedNode)
-                self.network.AddEdge(node, connectedNode)
-
-            self.__output()
-            self.__updateProgress(int(float(self.step+1)/steps*100.0))
 
             # Choose next node
             self.currentNode = self.chooseNextNode(connectedNodes)
 
             if self.currentNode == self.startNode :
-                print "Return!"
-                self.returns += 1
-                nodeEstimate = self.__getNodeEstimate(self.step, self.startNode, self.returns)
-                print nodeEstimate
+                if self.delegate != None:
+                    self.delegate.returnedToStartNode(self.step)
+                self.step = 0
+
+            self.step += 1
 
         print ""
 
 
-    def __getEdgeWeight(self, u, v):
-        return 1/self.crawler.getDegreeOfNode(u) + 1/self.crawler.getDegreeOfNode(v)
+class Estimator:
+    def __init__(self, crawler):
+        self.crawler = crawler
 
-    def __getVertexWeight(self, u):
-        sum = 1
-        for neighbour in self.crawler.getConnectedNodes(u):
-            sum += 1/self.crawler.getDegreeOfNode(neighbour)
-        return sum
+    def getEdgeWeight(self, u, v):
+        pass
 
-    def __getEdgeProbability(self, u, v):
-        return self.__getEdgeWeight(u, v) / self.__getVertexWeight(u)
+    def getNodeWeight(self, u):
+        pass
 
-    def __getNodeEstimate(self, time, node, nReturns):
-        print "time: " + str(time)
-        print "n Returns: " + str(nReturns)
-        nodeEstimate = (time * self.__getVertexWeight(node)) / (2 * nReturns)
-        return nodeEstimate
+class EdgeEstimator(Estimator):
+    def getEdgeWeight(self, u, v):
+        return 1.0
 
+    def getNodeWeight(self, u):
+        return self.crawler.getDegreeOfNode(u)
 
 
-class Experiment:
+class NodeEstimator(Estimator):
+    def getEdgeWeight(self, u, v):
+        return (1.0 / self.crawler.getDegreeOfNode(u)) + (1.0 / self.crawler.getDegreeOfNode(v))
+
+    def getNodeWeight(self, u):
+        neighbours = self.crawler.getConnectedNodes(u)
+        wsum = 0
+        for neighbour in neighbours:
+            wsum += self.getEdgeWeight(u, neighbour)
+        return wsum
+
+class Experiment(RandomWalkerDelegate):
     def __init__(self, graph, name):
+        self.returnTimes = []
         self.graph = graph
         self.name = name
+
+        snap.PrintInfo(self.graph, "Network Info")
+
+        self.outputFile = self.name + ".csv"
+
+        if self.outputFile is not None:
+            with open(self.outputFile, 'w') as csvfile:
+                fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate']
+                self.writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                self.writer.writeheader()
 
     def printGraphInfo(self, file):
         print("Printing Graph Info")
@@ -149,25 +171,69 @@ class Experiment:
     def visualiseGraph(self, file, title):
         snap.DrawGViz(self.graph, snap.gvlDot, file, title)
 
-    def run(self, steps):
-        crawler = SnapGraphCrawler(self.graph)
-        walker = RandomWalker(crawler, self.name+'.csv')
-        walker.walk(steps)
+    def __updateProgress(self, progress):
+        print '\r[{0}] {1}%'.format('#'*(progress/10), progress),
+
+    def run(self):
+        self.crawler = SnapGraphCrawler(self.graph)
+        self.estimator = EdgeEstimator(self.crawler)
+        self.startNode = self.crawler.getHighestDegreeNode()
+        print "Starting from node " + str(self.startNode) + " (degree:" + str(self.crawler.getDegreeOfNode(self.startNode)) + ")"
+        walker = RandomWalker(self.crawler, self.estimator, self.startNode)
+        walker.delegate = self
+        walker.walk()
+
+    # Walker Delegate
+
+    def returnedToStartNode(self, step):
+        self.returnTimes.append(step)
+        returnTimeAverage = sum(self.returnTimes)/len(self.returnTimes)
+        estimate = returnTimeAverage * (self.estimator.getNodeWeight(self.startNode)/2)
+
+        self.__updateProgress(len(self.returnTimes)/10)
+
+        with open(self.outputFile, 'a') as csvfile:
+            fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate']
+            self.writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            field1 = len(self.returnTimes)
+            field2 = step
+            field3 = returnTimeAverage
+            field4 = estimate
+            self.writer.writerow({'Return N': field1, 'Steps': field2, 'Return Avg': field3, 'Estimate': field4})
+
 
 if __name__ == '__main__':
-    # Generates an Erdos-Renyi random graph
-    # n1 = snap.GenRndGnm(snap.PNEANet, 10000, 1000000)
-    # exp1 = Experiment(n1, "randomgraph")
-    # exp1.run()
+    random.seed(time.time())
 
-    # # Generates a random scale-free, undirected graph using the Geometric Preferential Attachment model
+    # Generates an Erdos-Renyi random graph
+    n1 = snap.GenRndGnm(snap.PNEANet, 1000, 32000, False)
+
+    i = 1
+    while i<=10:
+        print("Experiment "+str(i))
+        Experiment(n1, "randomgraph"+str(i)).run()
+        i+=1
+
+
+    # Generates a random scale-free, undirected graph using the Geometric Preferential Attachment model
     # Rnd = snap.TRnd();
-    # n2 = snap.GenGeoPrefAttach(10000, 1000000, 0.25, Rnd)
+    # n2 = snap.GenGeoPrefAttach(1000, 10000, 0.25, Rnd)
     # exp2 = Experiment(n2, "geoprefattach")
     # exp2.run()
-    #
+
     # Generates an undirected graph with a power-law degree distribution using Barabasi-Albert model
-    Rnd = snap.TRnd();
-    n3 = snap.GenPrefAttach(100, 1000, Rnd)
-    exp3 = Experiment(n3, "barabasi")
-    exp3.run(10000)
+    # Rnd = snap.TRnd();
+    # n3 = snap.GenPrefAttach(1000, 10000, Rnd)
+    # exp3 = Experiment(n3, "barabasi")
+    # exp3.visualiseGraph("prefattch.png", "prefattach")
+    # exp3.run()
+
+
+    #JUNKKKKKKK
+
+    # def __addNode(self, node):
+    #     try:
+    #         self.network.AddNode(node)
+    #     # Ignores if node already exists
+    #     except RuntimeError:
+    #         pass
