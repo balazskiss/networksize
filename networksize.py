@@ -45,9 +45,10 @@ class SnapGraphCrawler(GraphCrawler):
         return outNodes
 
     def getDegreeOfNode(self, node):
-        return len(self.getConnectedNodes(node)) # FIX THIS!!!!!!!!!!!!!!!!!!!!!!
+        # deg1 =  len(self.getConnectedNodes(node)) # FIX THIS!!!!!!!!!!!!!!!!!!!!!!
         iterator = self.graph.GetNI(node)
-        return iterator.GetDeg()
+        deg2 = iterator.GetOutDeg()
+        return deg2
 
 class RandomWalkerDelegate:
 
@@ -65,6 +66,7 @@ class RandomWalker:
         self.estimator = estimator
         self.startNode = startNode
         self.network = snap.TNEANet.New()
+        self.running = False
 
 
     def chooseNextNode(self, connectedNodes):
@@ -73,13 +75,11 @@ class RandomWalker:
 
         # Weighted Random Walk
         rnd = random.random()
-        rnd = randint(0,100000) / 100000.0
         psum = 0.0
         for neighbour in connectedNodes:
             w_edge = self.estimator.getEdgeWeight(self.currentNode, neighbour)
             w_node = self.estimator.getNodeWeight(self.currentNode)
             p = w_edge / w_node
-            # p = 1.0 / len(connectedNodes)
             psum += p
             if rnd <= psum:
                 return neighbour
@@ -92,9 +92,10 @@ class RandomWalker:
 
 
     def walk(self):
+        self.running = True
         self.step = 0
         self.currentNode = self.startNode
-        while True:
+        while self.running:
             node = self.currentNode
             connectedNodes = self.crawler.getConnectedNodes(node)
 
@@ -108,7 +109,8 @@ class RandomWalker:
 
             self.step += 1
 
-        print ""
+    def stop(self):
+        self.running = False
 
 
 class Estimator:
@@ -141,8 +143,9 @@ class NodeEstimator(Estimator):
         return wsum
 
 class Experiment(RandomWalkerDelegate):
-    def __init__(self, graph, name):
+    def __init__(self, graph, name, returnLimit=0):
         self.returnTimes = []
+        self.returnLimit = returnLimit
         self.graph = graph
         self.name = name
 
@@ -179,9 +182,9 @@ class Experiment(RandomWalkerDelegate):
         self.estimator = EdgeEstimator(self.crawler)
         self.startNode = self.crawler.getHighestDegreeNode()
         print "Starting from node " + str(self.startNode) + " (degree:" + str(self.crawler.getDegreeOfNode(self.startNode)) + ")"
-        walker = RandomWalker(self.crawler, self.estimator, self.startNode)
-        walker.delegate = self
-        walker.walk()
+        self.walker = RandomWalker(self.crawler, self.estimator, self.startNode)
+        self.walker.delegate = self
+        self.walker.walk()
 
     # Walker Delegate
 
@@ -189,8 +192,6 @@ class Experiment(RandomWalkerDelegate):
         self.returnTimes.append(step)
         returnTimeAverage = sum(self.returnTimes)/len(self.returnTimes)
         estimate = returnTimeAverage * (self.estimator.getNodeWeight(self.startNode)/2)
-
-        self.__updateProgress(len(self.returnTimes)/10)
 
         with open(self.outputFile, 'a') as csvfile:
             fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate']
@@ -201,17 +202,21 @@ class Experiment(RandomWalkerDelegate):
             field4 = estimate
             self.writer.writerow({'Return N': field1, 'Steps': field2, 'Return Avg': field3, 'Estimate': field4})
 
+        self.__updateProgress(int(float(len(self.returnTimes))/float(self.returnLimit)*100.0))
+        if len(self.returnTimes) == self.returnLimit:
+            self.walker.stop()
+
 
 if __name__ == '__main__':
     random.seed(time.time())
 
     # Generates an Erdos-Renyi random graph
-    n1 = snap.GenRndGnm(snap.PNEANet, 1000, 32000, False)
+    n1 = snap.GenRndGnm(snap.PUNGraph, 1000, 5000, False)
 
     i = 1
     while i<=10:
         print("Experiment "+str(i))
-        Experiment(n1, "randomgraph"+str(i)).run()
+        Experiment(n1, "randomgraph"+str(i), 1000).run()
         i+=1
 
 
