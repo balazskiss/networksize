@@ -190,7 +190,7 @@ class Experiment(RandomWalkerDelegate):
 
     def returnedToStartNode(self, step):
         self.returnTimes.append(step)
-        returnTimeAverage = sum(self.returnTimes)/len(self.returnTimes)
+        returnTimeAverage = sum(self.returnTimes)/float(len(self.returnTimes))
         estimate = returnTimeAverage * (self.estimator.getNodeWeight(self.startNode)/2)
 
         with open(self.outputFile, 'a') as csvfile:
