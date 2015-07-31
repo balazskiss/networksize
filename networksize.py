@@ -207,24 +207,75 @@ class Experiment(RandomWalkerDelegate):
             self.walker.stop()
 
 
+class GraphImporter:
+    def __init__(self, file, limit):
+        self.file = file
+        self.limit = limit
+        self.network = snap.TUNGraph.New(1000000, 10000000)
+
+    def addNode(self, network, node):
+            try:
+                network.AddNode(node)
+            # Ignores if node already exists
+            except RuntimeError:
+                pass
+
+    def addEdge(self, network, node1, node2):
+            self.addNode(network, node1)
+            self.addNode(network, node2)
+            try:
+                network.AddEdge(node1,node2)
+            # Ignores if node already exists
+            except RuntimeError:
+                pass
+
+    def importGraph(self):
+        print("Importing graph...")
+        i = 0
+        with open(self.file) as f:
+            for line in f:
+                nodes = line.split('\t')
+                self.addEdge(self.network,int(nodes[0]),int(nodes[1]))
+                i+= 1
+                if i%1000000 == 0:
+                    print(i)
+                    snap.PrintInfo(self.network, "Network Info")
+                if i==self.limit:
+                    break
+        print("Graph has been imported")
+        snap.PrintInfo(self.network, "Network Info")
+        return self.network
+
+
 if __name__ == '__main__':
     random.seed(time.time())
+    Rnd = snap.TRnd();
 
     # Generates an Erdos-Renyi random graph
-    n1 = snap.GenRndGnm(snap.PUNGraph, 1000, 5000, False)
+    # network = snap.GenRndGnm(snap.PUNGraph, 1000, 5000, False)
+    # name = "randomgraph"
+
+    # Generates a random scale-free, undirected graph using the Geometric Preferential Attachment model
+    # network = snap.GenGeoPrefAttach(1000, 10000, 0.25, Rnd)
+    # name = "geoprefattach"
+
+    # Generates an undirected graph with a power-law degree distribution using Barabasi-Albert model
+    # network = snap.GenPrefAttach(1000, 10000, Rnd)
+    # name = "barabasi"
+
+    # Twitter network sample
+    importer = GraphImporter("/Volumes/Blaze's Disk/twitter/twitter_rv.net", 4561230)
+    network = importer.importGraph()
+    name="twitter"
 
     i = 1
     while i<=10:
         print("Experiment "+str(i))
-        Experiment(n1, "randomgraph"+str(i), 1000).run()
+        Experiment(network, name+str(i), 1000).run()
         i+=1
 
 
-    # Generates a random scale-free, undirected graph using the Geometric Preferential Attachment model
-    # Rnd = snap.TRnd();
-    # n2 = snap.GenGeoPrefAttach(1000, 10000, 0.25, Rnd)
-    # exp2 = Experiment(n2, "geoprefattach")
-    # exp2.run()
+
 
     # Generates an undirected graph with a power-law degree distribution using Barabasi-Albert model
     # Rnd = snap.TRnd();
