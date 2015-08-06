@@ -50,7 +50,7 @@ class GraphImporter:
         if not importWholeGraph:
             self.linesToRead = lineLimit
 
-        self.network = snap.TUNGraph.New(1000000, 10000000)
+        self.network = snap.TUNGraph.New(max(1000, self.linesToRead/1000), self.linesToRead)
 
         t = threading.Thread(target=self.progress)
         t.start()
