@@ -6,11 +6,16 @@ from crawler import *
 from estimator import *
 
 class Experiment(RandomWalkerDelegate):
-    def __init__(self, crawler, name, returnLimit=0):
+    def __init__(self, crawler, type, name, returnLimit=0):
         self.returnTimes = []
         self.returnLimit = returnLimit
         self.crawler = crawler
         self.name = name
+
+        if type == "node":
+            self.estimator = NodeEstimator(self.crawler)
+        elif type == "edge":
+            self.estimator = EdgeEstimator(self.crawler)
 
         random.seed(time.time())
 
@@ -27,7 +32,6 @@ class Experiment(RandomWalkerDelegate):
         print '\r[{0}{1}] {2}%, {3} returns, estimate: {4}'.format('#'*(progress/10), ' '*(10-progress/10), progress, returns, estimate),
 
     def run(self):
-        self.estimator = EdgeEstimator(self.crawler)
         self.startNode = self.crawler.getHighestDegreeNode()
         print "Starting from node " + str(self.startNode) + " (degree:" + str(self.crawler.getDegreeOfNode(self.startNode)) + ")"
         self.walker = RandomWalker(self.crawler, self.estimator, self.startNode)
@@ -55,6 +59,7 @@ class Experiment(RandomWalkerDelegate):
 
         if len(self.returnTimes) == self.returnLimit:
             self.walker.stop()
+            print("\n")
 
 
 

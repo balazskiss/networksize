@@ -10,7 +10,7 @@ crawler = None
 # Twitter network sample
 # 41.7 million user profiles, 1.47 billion social relations
 importer = networksize.GraphImporter("/Users/balazs/Desktop/twitter_rv.net", 4561230)
-network = importer.importGraph(False, 1000000)
+network = importer.importGraph(False, 10000000)
 crawler = networksize.SnapGraphCrawler(network)
 
 @app.route("/")
