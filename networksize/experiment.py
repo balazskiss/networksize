@@ -22,8 +22,9 @@ class Experiment(RandomWalkerDelegate):
                 self.writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 self.writer.writeheader()
 
-    def __updateProgress(self, progress):
-        print '\r[{0}] {1}%'.format('#'*(progress/10), progress),
+    def displayProgess(self, percent, returns, estimate):
+        progress = int(percent*100.0)
+        print '\r[{0}{1}] {2}%, {3} returns, estimate: {4}'.format('#'*(progress/10), ' '*(10-progress/10), progress, returns, estimate),
 
     def run(self):
         self.estimator = EdgeEstimator(self.crawler)
@@ -38,7 +39,7 @@ class Experiment(RandomWalkerDelegate):
     def returnedToStartNode(self, step):
         self.returnTimes.append(step)
         returnTimeAverage = sum(self.returnTimes)/float(len(self.returnTimes))
-        estimate = returnTimeAverage * (self.estimator.getNodeWeight(self.startNode)/2)
+        estimate = int(returnTimeAverage * (self.estimator.getNodeWeight(self.startNode)/2))
 
         with open(self.outputFile, 'a') as csvfile:
             fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate']
@@ -49,7 +50,9 @@ class Experiment(RandomWalkerDelegate):
             field4 = estimate
             self.writer.writerow({'Return N': field1, 'Steps': field2, 'Return Avg': field3, 'Estimate': field4})
 
-        self.__updateProgress(int(float(len(self.returnTimes))/float(self.returnLimit)*100.0))
+        percent = float(len(self.returnTimes))/float(self.returnLimit)
+        self.displayProgess(percent, len(self.returnTimes), estimate)
+
         if len(self.returnTimes) == self.returnLimit:
             self.walker.stop()
 
