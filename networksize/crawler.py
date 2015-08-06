@@ -3,6 +3,9 @@ from abc import ABCMeta
 from random import randint
 import urllib2
 import json
+import hermes.backend.dict
+
+cache = hermes.Hermes(hermes.backend.dict.Backend)
 
 class GraphCrawler:
     __metaclass__ = ABCMeta
@@ -64,12 +67,14 @@ class RemoteGraphCrawler(GraphCrawler):
         dict = json.loads(resp)
         return int(dict["result"])
 
+    @cache
     def getConnectedNodes(self, node):
         url = self.url+"/connectedNodes/"+str(node)
         resp = urllib2.urlopen(url).read()
         dict = json.loads(resp)
         return dict["result"]
 
+    @cache
     def getDegreeOfNode(self, node):
         url = self.url+"/degreeOfNode/"+str(node)
         resp = urllib2.urlopen(url).read()
