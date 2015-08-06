@@ -1,6 +1,8 @@
 import snap
 from abc import ABCMeta
 from random import randint
+import urllib2
+import json
 
 class GraphCrawler:
     __metaclass__ = ABCMeta
@@ -41,7 +43,35 @@ class SnapGraphCrawler(GraphCrawler):
         return outNodes
 
     def getDegreeOfNode(self, node):
-        # deg1 =  len(self.getConnectedNodes(node)) # FIX THIS!!!!!!!!!!!!!!!!!!!!!!
         iterator = self.graph.GetNI(node)
         deg2 = iterator.GetOutDeg()
         return deg2
+
+class RemoteGraphCrawler(GraphCrawler):
+
+    def __init__(self, url):
+        self.url = url
+
+    def getRandomNode(self):
+        url = self.url+"/randomNode"
+        resp = urllib2.urlopen(url).read()
+        dict = json.loads(resp)
+        return int(dict["result"])
+
+    def getHighestDegreeNode(self):
+        url = self.url+"/highestDegreeNode"
+        resp = urllib2.urlopen(url).read()
+        dict = json.loads(resp)
+        return int(dict["result"])
+
+    def getConnectedNodes(self, node):
+        url = self.url+"/connectedNodes/"+str(node)
+        resp = urllib2.urlopen(url).read()
+        dict = json.loads(resp)
+        return dict["result"]
+
+    def getDegreeOfNode(self, node):
+        url = self.url+"/degreeOfNode/"+str(node)
+        resp = urllib2.urlopen(url).read()
+        dict = json.loads(resp)
+        return int(dict["result"])

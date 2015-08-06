@@ -27,9 +27,9 @@ class RandomWalker:
         # Weighted Random Walk
         rnd = random.random()
         psum = 0.0
+        w_node = self.estimator.getNodeWeight(self.currentNode)
         for neighbour in connectedNodes:
             w_edge = self.estimator.getEdgeWeight(self.currentNode, neighbour)
-            w_node = self.estimator.getNodeWeight(self.currentNode)
             p = w_edge / w_node
             psum += p
             if rnd <= psum:

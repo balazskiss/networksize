@@ -3,9 +3,15 @@ from flask import Flask
 from flask import jsonify
 
 app = Flask(__name__)
-app.debug = True
+# app.debug = True
 network = None
 crawler = None
+
+# Twitter network sample
+# 41.7 million user profiles, 1.47 billion social relations
+importer = networksize.GraphImporter("/Users/balazs/Desktop/twitter_rv.net", 4561230)
+network = importer.importGraph(False, 1000000)
+crawler = networksize.SnapGraphCrawler(network)
 
 @app.route("/")
 def index():
@@ -32,12 +38,5 @@ def degreeOfNode(node):
     degree = crawler.getDegreeOfNode(int(node))
     return jsonify({"result": degree})
 
-
 if __name__ == '__main__':
-    # Twitter network sample
-    # 41.7 million user profiles, 1.47 billion social relations
-    importer = networksize.GraphImporter("/Volumes/Blaze's Disk/twitter/twitter_rv.net", 4561230)
-    network = importer.importGraph(False, 10000)
-    crawler = networksize.SnapGraphCrawler(network)
-
     app.run()
