@@ -4,6 +4,8 @@ from random import randint
 import urllib2
 import json
 import hermes.backend.dict
+import twitter
+import time
 
 cache = hermes.Hermes(hermes.backend.dict.Backend)
 
@@ -80,3 +82,34 @@ class RemoteGraphCrawler(GraphCrawler):
         resp = urllib2.urlopen(url).read()
         dict = json.loads(resp)
         return int(dict["result"])
+
+class TwitterGraphCrawler(GraphCrawler):
+
+    def __init__(self, consumer_key, consumers_secret, access_token_key, access_token_secret):
+        self.api = twitter.Api(consumer_key=consumer_key,
+                      consumer_secret=consumers_secret,
+                      access_token_key=access_token_key,
+                      access_token_secret=access_token_secret)
+
+    def getRandomNode(self):
+        return 252636900 # me
+
+    def getHighestDegreeNode(self):
+        return 21447363 # Katy Perry
+
+    @cache
+    def getConnectedNodes(self, node):
+        followers = None
+        while followers == None:
+            try:
+                followers=self.api.GetFollowerIDs(node, total_count=self.getDegreeOfNode(node))
+            except twitter.error.TwitterError:
+                sec = self.api.GetSleepTime('/followers/ids')
+                time.sleep(sec)
+        return followers
+
+    @cache
+    def getDegreeOfNode(self, node):
+        user = self.api.GetUser(node)
+        print user.name
+        return user.followers_count
