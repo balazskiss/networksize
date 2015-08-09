@@ -1,5 +1,6 @@
 import snap
 import random
+from random import randint
 
 class RandomWalkerDelegate:
 
@@ -19,11 +20,7 @@ class RandomWalker:
         self.network = snap.TNEANet.New()
         self.running = False
 
-
-    def chooseNextNode(self, connectedNodes):
-        if len(connectedNodes) == 0:
-            return None
-
+    def chooseNextNodeRandomlyUsingWeights(self, connectedNodes):
         # Weighted Random Walk
         rnd = random.random()
         psum = 0.0
@@ -36,11 +33,21 @@ class RandomWalker:
                 return neighbour
         return connectedNodes[0]
 
+    def chooseNextNodeRandomly(self, connectedNodes):
         # Simple Random Walk
         randomIndex = randint(0, len(connectedNodes)-1)
         nextNode = connectedNodes[randomIndex]
         return nextNode
 
+    def chooseNextNode(self, connectedNodes):
+        if len(connectedNodes) == 0:
+            return None
+
+        randomWalkType = self.estimator.randomWalkType()
+        if randomWalkType == "simple":
+            return self.chooseNextNodeRandomly(connectedNodes)
+        elif randomWalkType == "weighted":
+            return self.chooseNextNodeRandomlyUsingWeights(connectedNodes)
 
     def walk(self):
         self.running = True

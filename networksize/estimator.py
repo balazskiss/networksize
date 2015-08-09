@@ -2,6 +2,9 @@ class Estimator:
     def __init__(self, crawler):
         self.crawler = crawler
 
+    def randomWalkType(self):
+        return "weighted"
+
     def getEdgeWeight(self, u, v):
         pass
 
@@ -9,6 +12,9 @@ class Estimator:
         pass
 
 class EdgeEstimator(Estimator):
+    def randomWalkType(self):
+        return "simple"
+
     def getEdgeWeight(self, u, v):
         return 1.0
 
