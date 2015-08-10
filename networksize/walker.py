@@ -39,7 +39,8 @@ class RandomWalker:
         nextNode = connectedNodes[randomIndex]
         return nextNode
 
-    def chooseNextNode(self, connectedNodes):
+    def chooseNextNode(self):
+        connectedNodes = self.crawler.getConnectedNodes(self.currentNode)
         if len(connectedNodes) == 0:
             return None
 
@@ -54,11 +55,8 @@ class RandomWalker:
         self.step = 0
         self.currentNode = self.startNode
         while self.running:
-            node = self.currentNode
-            connectedNodes = self.crawler.getConnectedNodes(node)
-
             # Choose next node
-            self.currentNode = self.chooseNextNode(connectedNodes)
+            self.currentNode = self.chooseNextNode()
 
             if self.currentNode == self.startNode :
                 if self.delegate != None:
