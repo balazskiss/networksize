@@ -23,7 +23,7 @@ class Experiment(RandomWalkerDelegate):
 
         if self.outputFile is not None:
             with open(self.outputFile, 'w') as csvfile:
-                fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate']
+                fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes']
                 self.writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 self.writer.writeheader()
 
@@ -46,13 +46,13 @@ class Experiment(RandomWalkerDelegate):
         estimate = int(returnTimeAverage * (self.estimator.getNodeWeight(self.startNode)/2))
 
         with open(self.outputFile, 'a') as csvfile:
-            fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate']
+            fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes']
             self.writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             field1 = len(self.returnTimes)
             field2 = step
             field3 = returnTimeAverage
             field4 = estimate
-            self.writer.writerow({'Return N': field1, 'Steps': field2, 'Return Avg': field3, 'Estimate': field4})
+            self.writer.writerow({'Return N': field1, 'Steps': field2, 'Return Avg': field3, 'Estimate': field4,'Number of Nodes':len(self.walker.visitedNodes)})
 
         percent = float(len(self.returnTimes))/float(self.returnLimit)
         self.displayProgess(percent, len(self.returnTimes), estimate)

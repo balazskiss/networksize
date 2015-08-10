@@ -19,6 +19,7 @@ class RandomWalker:
         self.startNode = startNode
         self.network = snap.TNEANet.New()
         self.running = False
+        self.visitedNodes = set()
 
     def chooseNextNodeRandomlyUsingWeights(self, connectedNodes):
         # Weighted Random Walk
@@ -54,9 +55,11 @@ class RandomWalker:
         self.running = True
         self.step = 0
         self.currentNode = self.startNode
+        self.visitedNodes.add(self.currentNode)
         while self.running:
             # Choose next node
             self.currentNode = self.chooseNextNode()
+            self.visitedNodes.add(self.currentNode)
 
             if self.currentNode == self.startNode :
                 if self.delegate != None:
