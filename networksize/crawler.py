@@ -27,6 +27,13 @@ class GraphCrawler:
     def getDegreeOfNode(self, node):
         return 0
 
+    def getConnectedNodesWithDegrees(self, node):
+        nodes = self.getConnectedNodes(node)
+        dict = {}
+        for n in nodes:
+            dict[n] = self.getDegreeOfNode(n)
+        return dict
+
 
 class SnapGraphCrawler(GraphCrawler):
 
@@ -83,6 +90,16 @@ class RemoteGraphCrawler(GraphCrawler):
         dict = json.loads(resp)
         return int(dict["result"])
 
+    @cache
+    def getConnectedNodesWithDegrees(self, node):
+        url = self.url+"/connectedNodesWithDegrees/"+str(node)
+        resp = urllib2.urlopen(url).read()
+        dict = json.loads(resp)
+        result = {}
+        for strkey in dict["result"]:
+            result[int(strkey)]=dict["result"][strkey]
+        return result
+
 class TwitterGraphCrawler(GraphCrawler):
 
     def __init__(self, consumer_key, consumers_secret, access_token_key, access_token_secret):
@@ -95,6 +112,7 @@ class TwitterGraphCrawler(GraphCrawler):
         return 252636900 # me
 
     def getHighestDegreeNode(self):
+        return 252636900
         return 21447363 # Katy Perry
 
     @cache

@@ -29,6 +29,11 @@ def degreeOfNode(node):
     degree = app.crawler.getDegreeOfNode(int(node))
     return jsonify({"result": degree})
 
+@app.route("/connectedNodesWithDegrees/<node>")
+def connectedNodesWithDegrees(node):
+    connectedNodes = app.crawler.getConnectedNodesWithDegrees(int(node))
+    return jsonify({"result": connectedNodes})
+
 
 class GraphServer:
     def __init__(self, graph, debug=False):
