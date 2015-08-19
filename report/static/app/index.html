@@ -1,7 +1,7 @@
 <!doctype html>
 <html ng-app="networkSizeReport">
   <head>
-    
+
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular-animate/angular-animate.js"></script>
     <script src="bower_components/angular-bootstrap/ui-bootstrap.min.js"></script>
@@ -12,68 +12,72 @@
     <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
 
-    <script src="bower_components/Chart.js/Chart.js"></script>
-    <script src="bower_components/angular-chart.js/dist/angular-chart.min.js"></script>
-    <link rel="stylesheet" href="bower_components/angular-chart.js/dist/angular-chart.css">    
-      
+    <script src="libs/canvasjs.min.js"></script>
+
     <script src="app.js"></script>
     <link rel="stylesheet" href="app.css">
   </head>
   <body>
     <div ng-controller="MainController as main">
-      
-      <div class="container-fluid">
-        
-        <div class="row">
+
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Available Files</h3>
+        </div>
+        <div class="panel-body">
           <ul class="nav nav-pills">
             <li role="presentation" ng-class="{active: file==selectedFile}" ng-repeat="file in files" ng-click="loadFile(file)">
               <a href="#">{{file}}</a>
             </li>
           </ul>
         </div>
-        
-        <tabset>
-          
-          <tab heading="Data">
-            <table class="table table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Steps</th>
-                  <th>Return Avg</th>
-                  <th>Estimate</th>
-                  <th>Number of Nodes</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat="result in results">
-                  <td>{{result["Return N"]}}</td>
-                  <td>{{result["Steps"]}}</td>
-                  <td>{{result["Return Avg"]}}</td>
-                  <td>{{result["Estimate"]}}</td>
-                  <td>{{result["Number of Nodes"]}}</td>
-                </tr>
-              </tbody>
-            </table>
-          </tab>
-          
-          <tab heading="Estimate" select="showEstimates()" deselect="hideLineChart()">
-          </tab>
-          
-          <tab heading="New Nodes" select="showNewNodes()" deselect="hideLineChart()">
-          </tab>
-          
-          <tab heading="Degree Distribution">
-          </tab>
-        </tabset>
-        
+      </div>
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Selected File</h3>
         </div>
-        
-        <div ng-if="lineChartShow">
-            <canvas id="line" class="chart chart-line" data="data" labels="labels" legend="true" series="series" click="onClick">
-            </canvas>
+        <div class="panel-body">
+          <tabset>
+
+            <tab heading="Data">
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Steps</th>
+                    <th>Return Avg</th>
+                    <th>Estimate</th>
+                    <th>Number of Nodes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="result in results">
+                    <td>{{result["Return N"]}}</td>
+                    <td>{{result["Steps"]}}</td>
+                    <td>{{result["Return Avg"]}}</td>
+                    <td>{{result["Estimate"]}}</td>
+                    <td>{{result["Number of Nodes"]}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </tab>
+
+            <tab heading="Estimate" select="showEstimates()">
+              <div id="estimatesChart" style="height: 400px;"></div>
+            </tab>
+
+            <tab heading="New Nodes" select="showNewNodes()">
+              <div id="newNodesChart" style="height: 400px;"></div>
+            </tab>
+
+            <tab heading="Degree Distribution">
+            </tab>
+          </tabset>
         </div>
-        
+      </div>
+
     </div>
   </body>
 </html>

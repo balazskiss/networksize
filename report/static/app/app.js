@@ -1,51 +1,65 @@
-angular.module('networkSizeReport', ['ngAnimate', 'ui.bootstrap', 'chart.js'])
-.controller('MainController', function($scope, $http, $timeout) {
-    var ctrl = this;
+angular.module('networkSizeReport', ['ngAnimate', 'ui.bootstrap'])
+  .controller('MainController', function($scope, $http, $timeout) {
+  var ctrl = this;
 
-    $scope.files = []
-    $scope.selectedFile = null
-    $scope.results = []
+  $scope.files = []
+  $scope.selectedFile = null
+  $scope.results = []
 
-    $scope.loadFile = function(file) {
-        $scope.selectedFile = file
+  $scope.loadFile = function(file) {
+    $scope.selectedFile = file
 
-        $http.get('/files/'+file).success(function(response) {
-            $scope.results = null
-            $scope.results = response.result
-        });
-    }
+    $http.get('/files/'+file).success(function(response) {
+      $scope.results = null
+      $scope.results = response.result
+    });
+  }
 
-    $http.get('/files').success(function(response) {
-        $scope.files = response.result
+  $http.get('/files').success(function(response) {
+    $scope.files = response.result
+  });
+  
+  var renderGraph = function(containerID, dataPoints) {
+    var data = [];
+    var dataSeries = { type: "line" };
+    dataSeries.dataPoints = dataPoints;
+    data.push(dataSeries);
+
+    var chart = new CanvasJS.Chart(containerID, {
+      zoomEnabled: true,
+      animationEnabled: false,
+      axisX:{
+        labelAngle: 30
+      },
+      axisY :{
+        includeZero:false
+      },
+      data: data
     });
     
-    $scope.labels = ["January", "February", "March", "April", "May", "June", "July"];
-    $scope.series = ['Series A', 'Series B'];
-    $scope.data = [
-      [65, 59, 80, 81, 56, 55, 40],
-      [28, 48, 40, 19, 86, 27, 90]
-    ];
-    $scope.onClick = function (points, evt) {
-      console.log(points, evt);
-    };
+    $timeout( function(){ chart.render(); }, 100);
+  }
 
-    $scope.showEstimates = function() {
-        $scope.lineChartShow = true
-        $scope.labels = $scope.results.map(function(obj){return obj["Return N"]});
-        $scope.series = ["Series A"];
-        $scope.data = [$scope.results.map(function(obj){return obj["Estimate"]})];
-    };
-    
-    $scope.hideLineChart = function() {
-        $scope.lineChartShow = false
-    };
-    
-    $scope.showNewNodes = function() {
-        $scope.lineChartShow = true
-        $scope.labels = $scope.results.map(function(obj){return obj["Return N"]});
-        $scope.series = ["Series A"];
-        $scope.data = [$scope.results.map(function(obj){return obj["Number of Nodes"]})];
-    };
+  $scope.showEstimates = function() {
+    var dataPoints = [];
+    for (var i = 0; i < $scope.results.length; i++) {
+      dataPoints.push({
+        x: parseInt($scope.results[i]["Return N"]),
+        y: parseInt($scope.results[i]["Estimate"])
+      });
+    }
+    renderGraph("estimatesChart", dataPoints);
+  };
+  
+  $scope.showNewNodes = function() {
+    var dataPoints = [];
+    for (var i = 0; i < $scope.results.length; i++) {
+      dataPoints.push({
+        x: parseInt($scope.results[i]["Return N"]),
+        y: parseInt($scope.results[i]["Number of Nodes"])
+      });
+    }
+    renderGraph("newNodesChart", dataPoints);
+  };
 
-    
 });
