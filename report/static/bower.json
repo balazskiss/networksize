@@ -1,0 +1,25 @@
+{
+  "name": "networksize",
+  "version": "1.0.0",
+  "authors": [
+    "Balázs Kiss <dev@balazskiss.name>"
+  ],
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "app/bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-animate": "~1.4.4",
+    "bootstrap": "~3.3.5",
+    "jquery": "~2.1.4",
+    "angular-chart.js": "~0.7.3",
+    "Chart.js": "~1.0.2",
+    "angular-bootstrap": "~0.13.3"
+  }
+}
