@@ -1,13 +1,17 @@
 __author__ = 'balazs'
 
 from flask import Flask
-from flask import jsonify
+from flask import jsonify, redirect
 import glob
 import os
 import csv
 
 app = Flask(__name__, static_url_path='')
 app.debug = True
+
+@app.route('/')
+def index():
+    return redirect("/app/index.html")
 
 @app.route("/files")
 def files():
