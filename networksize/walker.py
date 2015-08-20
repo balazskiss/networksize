@@ -22,10 +22,10 @@ class RandomWalker:
         self.current_node = None
         self.network = snap.TNEANet.New()
         self.running = False
-        self.visited_nodes = set()
+        self.visited_nodes = {}
         self.step = 0
 
-    def choose_next_node_randomly_using_weights(self):
+    def __choose_next_node_randomly_using_weights(self):
         connected_nodes_with_degrees = self.crawler.getConnectedNodesWithDegrees(self.current_node)
         du = len(connected_nodes_with_degrees)
 
@@ -39,33 +39,35 @@ class RandomWalker:
             p = w_edge / w_node
             psum += p
             if rnd <= psum:
-                return neighbour
+                return neighbour, dv
         return None
 
-    def choose_next_node_randomly(self):
+    def __choose_next_node_randomly(self):
         connected_nodes = self.crawler.getConnectedNodes(self.current_node)
+        du = len(connected_nodes)
 
         # Simple Random Walk
-        random_index = randint(0, len(connected_nodes)-1)
+        random_index = randint(0, du-1)
         next_node = connected_nodes[random_index]
-        return next_node
+        return next_node, du
 
-    def choose_next_node(self):
+    def __choose_next_node(self):
         random_walk_type = self.estimator.randomWalkType()
         if random_walk_type == "simple":
-            return self.choose_next_node_randomly()
+            return self.__choose_next_node_randomly()
         elif random_walk_type == "weighted":
-            return self.choose_next_node_randomly_using_weights()
+            return self.__choose_next_node_randomly_using_weights()
 
     def walk(self):
         self.running = True
         self.step = 0
         self.current_node = self.start_node
-        self.visited_nodes.add(self.current_node)
+        self.visited_nodes[self.current_node] = self.crawler.getDegreeOfNode(self.current_node)
         while self.running:
             # Choose next node
-            self.current_node = self.choose_next_node()
-            self.visited_nodes.add(self.current_node)
+            node, degree = self.__choose_next_node()
+            self.current_node = node
+            self.visited_nodes[node] = degree
             self.step += 1
 
             if self.current_node == self.start_node:
@@ -75,3 +77,12 @@ class RandomWalker:
 
     def stop(self):
         self.running = False
+
+    def degree_distribution(self):
+        dd = {}
+        for node, degree in self.visited_nodes.iteritems():
+            if degree not in dd:
+                dd[degree] = 0
+            else:
+                dd[degree] += 1
+        return dd
