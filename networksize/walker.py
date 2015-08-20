@@ -26,16 +26,16 @@ class RandomWalker:
         self.step = 0
 
     def __choose_next_node_randomly_using_weights(self):
-        connected_nodes_with_degrees = self.crawler.getConnectedNodesWithDegrees(self.current_node)
+        connected_nodes_with_degrees = self.crawler.get_connected_nodes_with_degrees(self.current_node)
         du = len(connected_nodes_with_degrees)
 
         # Weighted Random Walk
         rnd = random.random()
         psum = 0.0
-        w_node = self.estimator.getNodeWeight(self.current_node, du, connected_nodes_with_degrees)
+        w_node = self.estimator.get_node_weight(self.current_node, du, connected_nodes_with_degrees)
         for neighbour in connected_nodes_with_degrees:
             dv = connected_nodes_with_degrees[neighbour]
-            w_edge = self.estimator.getEdgeWeight(self.current_node, neighbour, du, dv)
+            w_edge = self.estimator.get_edge_weight(self.current_node, neighbour, du, dv)
             p = w_edge / w_node
             psum += p
             if rnd <= psum:
@@ -43,7 +43,7 @@ class RandomWalker:
         return None
 
     def __choose_next_node_randomly(self):
-        connected_nodes = self.crawler.getConnectedNodes(self.current_node)
+        connected_nodes = self.crawler.get_connected_nodes(self.current_node)
         du = len(connected_nodes)
 
         # Simple Random Walk
@@ -52,7 +52,7 @@ class RandomWalker:
         return next_node, du
 
     def __choose_next_node(self):
-        random_walk_type = self.estimator.randomWalkType()
+        random_walk_type = self.estimator.random_walk_type()
         if random_walk_type == "simple":
             return self.__choose_next_node_randomly()
         elif random_walk_type == "weighted":
@@ -62,7 +62,7 @@ class RandomWalker:
         self.running = True
         self.step = 0
         self.current_node = self.start_node
-        self.visited_nodes[self.current_node] = self.crawler.getDegreeOfNode(self.current_node)
+        self.visited_nodes[self.current_node] = self.crawler.get_degree_of_node(self.current_node)
         while self.running:
             # Choose next node
             node, degree = self.__choose_next_node()

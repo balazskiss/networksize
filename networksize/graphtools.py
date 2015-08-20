@@ -1,16 +1,20 @@
 import snap
 
-def printGraphInfo(graph, file):
+
+def print_graph_info(graph, file):
     print("Printing Graph Info")
     snap.PrintInfo(graph, "Python type PNGraph", file, True)
 
-def printFullGraphInfo(graph, file):
+
+def print_full_graph_info(graph, file):
     print("Printing Full Graph Info")
     snap.PrintInfo(graph, "Python type PNGraph", file, False)
 
-def plotDegreeDistribution(graph, file):
+
+def plot_degree_distribution(graph, file):
     print("Plotting Degree Distribution")
     snap.PlotOutDegDistr(graph, file, "Network - out-degree Distribution")
 
-def visualiseGraph(graph, file, title):
+
+def visualise_graph(graph, file, title):
     snap.DrawGViz(graph, snap.gvlDot, file, title)

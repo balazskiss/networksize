@@ -6,6 +6,7 @@ from estimator import *
 
 class Experiment(RandomWalkerDelegate):
     def __init__(self, crawler, type, name, return_limit=0):
+        super(Experiment, self).__init__()
         self.return_times = []
         self.return_limit = return_limit
         self.crawler = crawler
@@ -48,8 +49,8 @@ class Experiment(RandomWalkerDelegate):
         print '\r[{0}{1}] {2}%, {3} returns, estimate: {4}'.format('#'*(progress/10), ' '*(10-progress/10), progress, returns, estimate),
 
     def run(self):
-        self.start_node = self.crawler.getHighestDegreeNode()
-        print "Starting from node " + str(self.start_node) + " (degree:" + str(self.crawler.getDegreeOfNode(self.start_node)) + ")"
+        self.start_node = self.crawler.get_highest_degree_node()
+        print "Starting from node " + str(self.start_node) + " (degree:" + str(self.crawler.get_degree_of_node(self.start_node)) + ")"
         self.walker = RandomWalker(self.crawler, self.estimator, self.start_node)
         self.walker.delegate = self
         self.walker.walk()
@@ -59,7 +60,7 @@ class Experiment(RandomWalkerDelegate):
     def returned_to_start_node(self, step):
         self.return_times.append(step)
         return_time_average = sum(self.return_times)/float(len(self.return_times))
-        estimate = int(return_time_average * (self.estimator.getNodeWeight(self.start_node)/2))
+        estimate = int(return_time_average * (self.estimator.get_node_weight(self.start_node)/2))
 
         self.append_to_output_file(len(self.return_times), step, return_time_average, estimate, len(self.walker.visited_nodes), self.walker.degree_distribution())
 

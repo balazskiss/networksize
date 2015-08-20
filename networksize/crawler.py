@@ -9,125 +9,131 @@ import time
 
 cache = hermes.Hermes(hermes.backend.dict.Backend)
 
+
 class GraphCrawler:
     __metaclass__ = ABCMeta
 
     def __init__(self):
         pass
 
-    def getRandomNode(self):
+    def get_random_node(self):
         return None
 
-    def getHighestDegreeNode(self):
+    def get_highest_degree_node(self):
         return None
 
-    def getConnectedNodes(self, node):
+    def get_connected_nodes(self, node):
         return []
 
-    def getDegreeOfNode(self, node):
+    def get_degree_of_node(self, node):
         return 0
 
-    def getConnectedNodesWithDegrees(self, node):
-        nodes = self.getConnectedNodes(node)
-        dict = {}
+    def get_connected_nodes_with_degrees(self, node):
+        nodes = self.get_connected_nodes(node)
+        nodes_dict = {}
         for n in nodes:
-            dict[n] = self.getDegreeOfNode(n)
-        return dict
+            nodes_dict[n] = self.get_degree_of_node(n)
+        return nodes_dict
 
 
 class SnapGraphCrawler(GraphCrawler):
 
     def __init__(self, graph):
+        super(SnapGraphCrawler, self).__init__()
         self.graph = graph
 
-    def getRandomNode(self):
+    def get_random_node(self):
         return randint(0, self.graph.GetNodes()-1)
 
-    def getHighestDegreeNode(self):
+    def get_highest_degree_node(self):
         return snap.GetMxDegNId(self.graph)
 
-    def getConnectedNodes(self, node):
-        nodeIterator=self.graph.GetNI(node)
-        outNodes = []
-        for n in range(0,nodeIterator.GetOutDeg()):
-            nodeId = nodeIterator.GetOutNId(n)
-            outNodes.append(nodeId)
-        return outNodes
+    def get_connected_nodes(self, node):
+        node_iterator = self.graph.GetNI(node)
+        out_nodes = []
+        for n in range(0, node_iterator.GetOutDeg()):
+            node_id = node_iterator.GetOutNId(n)
+            out_nodes.append(node_id)
+        return out_nodes
 
-    def getDegreeOfNode(self, node):
+    def get_degree_of_node(self, node):
         iterator = self.graph.GetNI(node)
-        deg2 = iterator.GetOutDeg()
-        return deg2
+        out_deg = iterator.GetOutDeg()
+        return out_deg
+
 
 class RemoteGraphCrawler(GraphCrawler):
 
     def __init__(self, url):
+        super(RemoteGraphCrawler, self).__init__()
         self.url = url
 
-    def getRandomNode(self):
+    def get_random_node(self):
         url = self.url+"/randomNode"
         resp = urllib2.urlopen(url).read()
-        dict = json.loads(resp)
-        return int(dict["result"])
+        resp_obj = json.loads(resp)
+        return int(resp_obj["result"])
 
-    def getHighestDegreeNode(self):
+    def get_highest_degree_node(self):
         url = self.url+"/highestDegreeNode"
         resp = urllib2.urlopen(url).read()
-        dict = json.loads(resp)
-        return int(dict["result"])
+        resp_obj = json.loads(resp)
+        return int(resp_obj["result"])
 
     @cache
-    def getConnectedNodes(self, node):
+    def get_connected_nodes(self, node):
         url = self.url+"/connectedNodes/"+str(node)
         resp = urllib2.urlopen(url).read()
-        dict = json.loads(resp)
-        return dict["result"]
+        resp_obj = json.loads(resp)
+        return resp_obj["result"]
 
     @cache
-    def getDegreeOfNode(self, node):
+    def get_degree_of_node(self, node):
         url = self.url+"/degreeOfNode/"+str(node)
         resp = urllib2.urlopen(url).read()
-        dict = json.loads(resp)
-        return int(dict["result"])
+        resp_obj = json.loads(resp)
+        return int(resp_obj["result"])
 
     @cache
-    def getConnectedNodesWithDegrees(self, node):
+    def get_connected_nodes_with_degrees(self, node):
         url = self.url+"/connectedNodesWithDegrees/"+str(node)
         resp = urllib2.urlopen(url).read()
-        dict = json.loads(resp)
+        resp_obj = json.loads(resp)
         result = {}
-        for strkey in dict["result"]:
-            result[int(strkey)]=dict["result"][strkey]
+        for strkey in resp_obj["result"]:
+            result[int(strkey)] = resp_obj["result"][strkey]
         return result
+
 
 class TwitterGraphCrawler(GraphCrawler):
 
     def __init__(self, consumer_key, consumers_secret, access_token_key, access_token_secret):
+        super(TwitterGraphCrawler, self).__init__()
         self.api = twitter.Api(consumer_key=consumer_key,
-                      consumer_secret=consumers_secret,
-                      access_token_key=access_token_key,
-                      access_token_secret=access_token_secret)
+                               consumer_secret=consumers_secret,
+                               access_token_key=access_token_key,
+                               access_token_secret=access_token_secret)
 
-    def getRandomNode(self):
-        return 252636900 # me
+    def get_random_node(self):
+        return 252636900  # me
 
-    def getHighestDegreeNode(self):
+    def get_highest_degree_node(self):
         return 252636900
-        return 21447363 # Katy Perry
+        # return 21447363  # Katy Perry
 
     @cache
-    def getConnectedNodes(self, node):
+    def get_connected_nodes(self, node):
         followers = None
-        while followers == None:
+        while followers is None:
             try:
-                followers=self.api.GetFollowerIDs(node, total_count=self.getDegreeOfNode(node))
+                followers = self.api.GetFollowerIDs(node)
             except twitter.error.TwitterError:
                 sec = self.api.GetSleepTime('/followers/ids')
                 time.sleep(sec)
         return followers
 
     @cache
-    def getDegreeOfNode(self, node):
+    def get_degree_of_node(self, node):
         user = self.api.GetUser(node)
         print user.name
         return user.followers_count

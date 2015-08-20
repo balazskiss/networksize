@@ -2,70 +2,74 @@ import snap
 import threading
 import time
 
-class GraphImporter:
-    def __init__(self, file, lineCount):
-        self.file = file
-        self.lineCount = lineCount
-        self.linesToRead = lineCount
 
-    def addNode(self, network, node):
+class GraphImporter:
+    def __init__(self, file, line_count):
+        self.file = file
+        self.lineCount = line_count
+        self.lines_to_read = line_count
+        self.network = None
+        self.stopped_progress_thread = None
+        self.current_line = 0
+
+    def add_node(self, network, node):
             try:
                 network.AddNode(node)
             # Ignores if node already exists
             except RuntimeError:
                 pass
 
-    def addEdge(self, network, node1, node2):
-            self.addNode(network, node1)
-            self.addNode(network, node2)
+    def add_edge(self, network, node1, node2):
+            self.add_node(network, node1)
+            self.add_node(network, node2)
             try:
-                network.AddEdge(node1,node2)
+                network.AddEdge(node1, node2)
             # Ignores if edge already exists
             except RuntimeError:
                 pass
 
-    def displayProgess(self, progress, secondsRemaining):
+    def display_progess(self, progress, seconds_remaining):
         progress = int(progress*100.0)
-        timeRemaining = str(secondsRemaining) + " secs"
-        if secondsRemaining > 60:
-            minsRemaining = secondsRemaining/60
-            if minsRemaining == 1:
-                timeRemaining = str(minsRemaining) + " min"
+        time_remaining = str(seconds_remaining) + " secs"
+        if seconds_remaining > 60:
+            mins_remaining = seconds_remaining / 60
+            if 1 == mins_remaining:
+                time_remaining = str(mins_remaining) + " min"
             else:
-                timeRemaining = str(minsRemaining) + " mins"
+                time_remaining = str(mins_remaining) + " mins"
 
-        print '\r[{0}{1}] {2}%, {3} remaining'.format('#'*(progress/10), ' '*(10-progress/10), progress, timeRemaining),
+        print '\r[{0}{1}] {2}%, {3} remaining'.format('#'*(progress/10), ' '*(10-progress/10), progress, time_remaining),
 
     def progress(self):
-        startTime = time.time()
-        self.stoppedProgressThread = threading.Event()
-        while not self.stoppedProgressThread.wait(1):
-            percent = float(self.currentLine)/float(self.linesToRead)
+        start_time = time.time()
+        self.stopped_progress_thread = threading.Event()
+        while not self.stopped_progress_thread.wait(1):
+            percent = float(self.current_line)/float(self.lines_to_read)
             now = time.time()
-            secondsElapsed = int(now - startTime)
-            secondsRemaining = int(float(secondsElapsed)/percent - secondsElapsed)
-            self.displayProgess(percent, secondsRemaining)
+            seconds_elapsed = int(now - start_time)
+            seconds_remaining = int(float(seconds_elapsed)/percent - seconds_elapsed)
+            self.display_progess(percent, seconds_remaining)
 
-    def importGraph(self, importWholeGraph = True, lineLimit = 0):
-        if not importWholeGraph:
-            self.linesToRead = lineLimit
+    def import_graph(self, import_whole_graph=True, line_limit=0):
+        if not import_whole_graph:
+            self.lines_to_read = line_limit
 
-        self.network = snap.TUNGraph.New(max(1000, self.linesToRead/1000), self.linesToRead)
+        self.network = snap.TUNGraph.New(max(1000, self.lines_to_read/1000), self.lines_to_read)
 
         t = threading.Thread(target=self.progress)
         t.start()
 
         print("Importing graph...")
-        self.currentLine = 0
+        self.current_line = 0
         with open(self.file) as f:
             for line in f:
                 nodes = line.split('\t')
-                self.addEdge(self.network,int(nodes[0]),int(nodes[1]))
-                self.currentLine += 1
-                if not importWholeGraph and self.currentLine==lineLimit:
+                self.add_edge(self.network, int(nodes[0]), int(nodes[1]))
+                self.current_line += 1
+                if not import_whole_graph and self.current_line == line_limit:
                     break
 
-        self.stoppedProgressThread.set()
+        self.stopped_progress_thread.set()
 
         print("\nGraph has been imported")
         snap.PrintInfo(self.network, "Network Info")
