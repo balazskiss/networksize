@@ -11,7 +11,7 @@ app.debug = True
 
 @app.route('/')
 def index():
-    return redirect("/app/index.html")
+    return redirect("/index.html")
 
 @app.route("/files")
 def files():
