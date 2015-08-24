@@ -1,4 +1,5 @@
 import csv
+import json
 from walker import *
 from crawler import *
 from estimator import *
@@ -6,7 +7,6 @@ from estimator import *
 
 class Experiment(RandomWalkerDelegate):
     def __init__(self, crawler, type, name, return_limit=0):
-        super(Experiment, self).__init__()
         self.return_times = []
         self.return_limit = return_limit
         self.crawler = crawler
@@ -21,28 +21,33 @@ class Experiment(RandomWalkerDelegate):
 
         random.seed(time.time())
 
-        self.output_file = self.name + ".csv"
-        self.init_output_file()
+        self.csv_file_name = self.name + ".csv"
+        self.degdist_file_name = self.name + ".degdist.json"
 
-    def init_output_file(self):
-        if self.output_file is not None:
-            with open(self.output_file, 'w') as csvfile:
-                fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes', 'Degree Distribution']
+        self.init_csv_file()
+
+    def init_csv_file(self):
+        if self.csv_file_name is not None:
+            with open(self.csv_file_name, 'w') as csvfile:
+                fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
 
-    def append_to_output_file(self, returns, step, return_time_avg, estimate, num_nodes, deg_dist):
-        with open(self.output_file, 'a') as csvfile:
-            fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes', 'Degree Distribution']
+    def append_to_csv_file(self, returns, step, return_time_avg, estimate, num_nodes):
+        with open(self.csv_file_name, 'a') as csvfile:
+            fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow({
                 'Return N': returns,
                 'Steps': step,
                 'Return Avg': return_time_avg,
                 'Estimate': estimate,
-                'Number of Nodes': num_nodes,
-                'Degree Distribution': deg_dist
+                'Number of Nodes': num_nodes
             })
+
+    def write_to_degdist_file(self, deg_dist):
+        with open(self.degdist_file_name, 'w') as degdistfile:
+            degdistfile.write(json.dumps(deg_dist))
 
     def display_progess(self, percent, returns, estimate):
         progress = int(percent*100.0)
@@ -62,7 +67,8 @@ class Experiment(RandomWalkerDelegate):
         return_time_average = sum(self.return_times)/float(len(self.return_times))
         estimate = int(return_time_average * (self.estimator.get_node_weight(self.start_node)/2))
 
-        self.append_to_output_file(len(self.return_times), step, return_time_average, estimate, len(self.walker.visited_nodes), self.walker.degree_distribution())
+        self.append_to_csv_file(len(self.return_times), step, return_time_average, estimate, len(self.walker.visited_nodes))
+        self.write_to_degdist_file(self.walker.degree_distribution())
 
         percent = float(len(self.return_times))/float(self.return_limit)
         self.display_progess(percent, len(self.return_times), estimate)

@@ -75,7 +75,9 @@
               <div id="newNodesChart" style="height: 400px;"></div>
             </tab>
 
-            <tab heading="Degree Distribution">
+            <tab heading="Degree Distribution" select="showDegrees()">
+              <div id="degreesChart" style="height: 400px;" ng-show="degDist"></div>
+              <div ng-show="!degDist">Not available</div>
             </tab>
           </tabset>
         </div>

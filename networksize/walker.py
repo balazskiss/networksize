@@ -82,7 +82,7 @@ class RandomWalker:
         dd = {}
         for node, degree in self.visited_nodes.iteritems():
             if degree not in dd:
-                dd[degree] = 0
+                dd[degree] = 1
             else:
                 dd[degree] += 1
         return dd

@@ -1,9 +1,12 @@
 import snap
 
 
-def print_graph_info(graph, file):
+def print_graph_info(graph, file=None):
     print("Printing Graph Info")
-    snap.PrintInfo(graph, "Python type PNGraph", file, True)
+    if file is None:
+        snap.PrintInfo(graph, "Python type PNGraph")
+    else:
+        snap.PrintInfo(graph, "Python type PNGraph", file, True)
 
 
 def print_full_graph_info(graph, file):
