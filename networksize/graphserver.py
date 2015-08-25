@@ -48,5 +48,5 @@ class GraphServer:
         app.network = graph
         app.crawler = SnapGraphCrawler(graph)
 
-    def run(self):
-        app.run()
+    def run(self, port=5005):
+        app.run(port=port)

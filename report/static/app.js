@@ -8,6 +8,40 @@ angular.module('networkSizeReport', ['ngAnimate', 'ui.bootstrap'])
   $scope.degDist = null
   $scope.isLoading = false
 
+  // Sockets
+  namespace = '';
+  var socket = io.connect('http://' + document.domain + ':' + 5001 + namespace);
+
+  socket.on('connect', function() {
+    console.log("connect");
+    socket.emit('connect');
+  });
+
+  socket.on('filesWatcher', function(msg) {
+    console.log(msg);
+    if($scope.selectedFile == msg.src) {
+      $scope.loadFile($scope.selectedFile)
+    }
+  });
+
+  // Utility
+  var getDegDistFileName = function(file) {
+    return file.replace(/\.[^/.]+$/, ".degdist.json");
+  }
+  
+  var refreshView = function() {
+    var tab = $('.nav-tabs .active').text().trim()
+    console.log(tab)
+    if(tab == "Data") {
+    }else if(tab == "Estimate"){
+      $scope.showEstimates()
+    }else if(tab == "New Nodes"){
+      $scope.showNewNodes()
+    }else if(tab == "Degree Distribution"){
+      $scope.showDegrees()
+    }
+  }
+
   var renderGraph = function(containerID, dataPoints) {
     var data = [];
     var dataSeries = { type: "line" };
@@ -42,6 +76,7 @@ angular.module('networkSizeReport', ['ngAnimate', 'ui.bootstrap'])
   });
 
   $scope.loadFile = function(file) {
+    if($scope.isLoading) return;
     console.log("Loading file: "+file)
     $scope.isLoading = true
     $scope.selectedFile = file
@@ -51,10 +86,12 @@ angular.module('networkSizeReport', ['ngAnimate', 'ui.bootstrap'])
     $http.get('/files/'+file).success(function(response) {
       $scope.results = response.result
       $scope.isLoading = false
+      refreshView()
     });
 
-    $http.get('/files/'+file.replace(/\.[^/.]+$/, ".degdist.json")).success(function(response) {
+    $http.get('/files/'+getDegDistFileName(file)).success(function(response) {
       $scope.degDist = response.result
+      refreshView()
     });
   }
 
