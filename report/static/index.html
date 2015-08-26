@@ -51,6 +51,7 @@
                 <thead>
                   <tr>
                     <th>#</th>
+                    <th>Date</th>
                     <th>Steps</th>
                     <th>Return Avg</th>
                     <th>Estimate</th>
@@ -60,10 +61,11 @@
                 <tbody>
                   <tr ng-repeat="result in results">
                     <td>{{result["Return N"]}}</td>
-                    <td>{{result["Steps"]}}</td>
-                    <td>{{result["Return Avg"]}}</td>
-                    <td>{{result["Estimate"]}}</td>
-                    <td>{{result["Number of Nodes"]}}</td>
+                    <td>{{result["Date"]}}</td>
+                    <td>{{result["Steps"] | number}}</td>
+                    <td>{{result["Return Avg"] | number}}</td>
+                    <td>{{result["Estimate"] | number}}</td>
+                    <td>{{result["Number of Nodes"] | number}}</td>
                   </tr>
                 </tbody>
               </table>

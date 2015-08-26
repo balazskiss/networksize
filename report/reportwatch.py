@@ -23,5 +23,5 @@ def report_file_event_handler(ev, src):
 
 
 if __name__ == '__main__':
-    ReportEventHandler("..", report_file_event_handler)
+    ReportEventHandler("results", report_file_event_handler)
     socketio.run(app, port=5001)
