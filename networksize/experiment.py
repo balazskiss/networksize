@@ -1,5 +1,5 @@
 import csv
-import json
+from time import strftime
 from walker import *
 from crawler import *
 from estimator import *
@@ -29,16 +29,17 @@ class Experiment(RandomWalkerDelegate):
     def init_csv_file(self):
         if self.csv_file_name is not None:
             with open(self.csv_file_name, 'w') as csvfile:
-                fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes']
+                fieldnames = ['Return N', 'Date', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
 
     def append_to_csv_file(self, returns, step, return_time_avg, estimate, num_nodes):
         with open(self.csv_file_name, 'a') as csvfile:
-            fieldnames = ['Return N', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes']
+            fieldnames = ['Return N', 'Date', 'Steps', 'Return Avg', 'Estimate', 'Number of Nodes']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow({
                 'Return N': returns,
+                'Date': strftime("%Y-%m-%d %H:%M:%S"),
                 'Steps': step,
                 'Return Avg': return_time_avg,
                 'Estimate': estimate,
