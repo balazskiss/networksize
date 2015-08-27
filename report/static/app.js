@@ -35,7 +35,7 @@ angular.module('networkSizeReport', ['ngAnimate', 'ui.bootstrap'])
     if(tab == "Data") {
     }else if(tab == "Estimate"){
       $scope.showEstimates()
-    }else if(tab == "New Nodes"){
+    }else if(tab == "Visited Nodes"){
       $scope.showNewNodes()
     }else if(tab == "Degree Distribution"){
       $scope.showDegrees()
@@ -74,14 +74,18 @@ angular.module('networkSizeReport', ['ngAnimate', 'ui.bootstrap'])
   $http.get('/files').success(function(response) {
     $scope.files = response.result
   });
-
-  $scope.loadFile = function(file) {
-    if($scope.isLoading) return;
-    console.log("Loading file: "+file)
-    $scope.isLoading = true
+  
+  $scope.chooseFile = function(file) {
+    console.log("Choosing file: "+file)
     $scope.selectedFile = file
     $scope.results = []
     $scope.degDist = null
+    $scope.loadFile(file);
+  }
+
+  $scope.loadFile = function(file) {
+    if($scope.isLoading) return;
+    $scope.isLoading = true
 
     $http.get('/files/'+file).success(function(response) {
       $scope.results = response.result
@@ -111,7 +115,7 @@ angular.module('networkSizeReport', ['ngAnimate', 'ui.bootstrap'])
     for (var i = 0; i < $scope.results.length; i++) {
       dataPoints.push({
         x: parseInt($scope.results[i]["Return N"]),
-        y: parseInt($scope.results[i]["Number of Nodes"])
+        y: parseInt($scope.results[i]["Visited Nodes"])
       });
     }
     renderGraph("newNodesChart", dataPoints);

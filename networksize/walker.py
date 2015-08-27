@@ -86,3 +86,11 @@ class RandomWalker:
             else:
                 dd[degree] += 1
         return dd
+
+    def average_degree(self):
+        sum = 0
+        count = 0
+        for node, degree in self.visited_nodes.iteritems():
+            sum = sum + degree
+            count = count + 1
+        return sum/float(count)

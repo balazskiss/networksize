@@ -1,5 +1,3 @@
-__author__ = 'balazs'
-
 from flask import Flask
 from flask import jsonify, redirect
 import glob
@@ -34,14 +32,14 @@ def index():
 
 @app.route("/files")
 def files():
-    files = glob.glob("../*.csv")
+    files = glob.glob("../results/*.csv")
     for i in range(0, len(files)):
         files[i] = os.path.basename(files[i])
     return jsonify({"result": files})
 
 @app.route("/files/<file>")
 def file(file):
-    file = "../"+file
+    file = "../results/"+file
     if file.endswith(".csv"):
         content = csv_to_array(file)
     else:
